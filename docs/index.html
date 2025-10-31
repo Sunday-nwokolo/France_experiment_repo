@@ -18,26 +18,41 @@
   <div id="samples">Loading samples…</div>
 
   <script>
-    // Fetch directory listing of /samples
+    // Repo details
+    const owner = "Sunday-nwokolo";
+    const repo  = "France_experiment_repo";
+    const branch = "main";
+    // GitHub API endpoint for folder contents
+    const apiURL = `https://api.github.com/repos/${owner}/${repo}/contents/docs/samples?ref=${branch}`;
+
     async function listSamples() {
       const container = document.getElementById('samples');
       try {
-        const res = await fetch('samples/');
-        const text = await res.text();
-        const files = [...text.matchAll(/href="([^"]+\.html)"/g)]
-                      .map(m => m[1])
-                      .filter(name => !name.includes('index.html'));
-        if (files.length === 0) {
+        const res = await fetch(apiURL, { headers: { 'Accept': 'application/vnd.github+json' }});
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = await res.json();
+
+        // Keep only .html files
+        const htmls = (items || [])
+          .filter(it => it.type === 'file' && it.name.toLowerCase().endsWith('.html'))
+          .sort((a,b) => a.name.localeCompare(b.name));
+
+        if (htmls.length === 0) {
           container.innerHTML = "<p>No sample plots found in /samples/.</p>";
           return;
         }
-        container.innerHTML = files.map(f => `
-          <div class="card">
-            <h3>${f.replace('.html','').replace(/_/g,' ')}</h3>
-            <p><a href="samples/${f}" target="_blank">Open plot</a></p>
-          </div>`).join('');
+
+        container.innerHTML = htmls.map(f => {
+          const pretty = f.name.replace('.html','').replace(/_/g,' ');
+          return `
+            <div class="card">
+              <h3>${pretty}</h3>
+              <p><a href="samples/${f.name}" target="_blank" rel="noopener">Open plot</a></p>
+            </div>
+          `;
+        }).join('');
       } catch (err) {
-        container.innerHTML = "<p>Could not load samples directory.</p>";
+        container.innerHTML = `<p>Could not load samples (${err.message}).</p>`;
       }
     }
     listSamples();
