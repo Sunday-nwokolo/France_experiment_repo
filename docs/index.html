@@ -1,52 +1,46 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Scan Planning – Samples</title>
+  <meta charset="utf-8">
+  <title>Scan Planning – Interactive Samples</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {font-family: system-ui, Segoe UI, Arial; margin: 2rem;}
-    h1 {margin-bottom: 1.5rem;}
-    .grid {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 14px;
-      background: #fafafa;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.05);
-    }
-    a {color: #0a58ca; text-decoration: none; font-weight: 600;}
-    a:hover {text-decoration: underline;}
+    h1 {margin-bottom: 1rem;}
+    #samples {display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+    .card {border:1px solid #ddd;border-radius:12px;padding:14px;background:#fafafa;box-shadow:2px 2px 6px rgba(0,0,0,0.05);}
+    a {color:#0a58ca;text-decoration:none;font-weight:600;}
+    a:hover{text-decoration:underline;}
   </style>
 </head>
 <body>
   <h1>Scan Planning – Interactive Samples</h1>
+  <div id="samples">Loading samples…</div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>Sample A</h3>
-      <p>Description: 225 kV steel scan.</p>
-      <p><a href="samples/sample_A.html" target="_blank">Open plot</a></p>
-    </div>
-    <div class="card">
-      <h3>Sample B</h3>
-      <p>Description: 160 kV zirconium core.</p>
-      <p><a href="samples/sample_B.html" target="_blank">Open plot</a></p>
-    </div>
-    <div class="card">
-      <h3>Sample C</h3>
-      <p>Description: 120 kV resin composite.</p>
-      <p><a href="samples/sample_C.html" target="_blank">Open plot</a></p>
-    </div>
-    <div class="card">
-      <h3>Sample D</h3>
-      <p>Description: 80 kV aluminium test.</p>
-      <p><a href="samples/sample_D.html" target="_blank">Open plot</a></p>
-    </div>
-  </div>
+  <script>
+    // Fetch directory listing of /samples
+    async function listSamples() {
+      const container = document.getElementById('samples');
+      try {
+        const res = await fetch('samples/');
+        const text = await res.text();
+        const files = [...text.matchAll(/href="([^"]+\.html)"/g)]
+                      .map(m => m[1])
+                      .filter(name => !name.includes('index.html'));
+        if (files.length === 0) {
+          container.innerHTML = "<p>No sample plots found in /samples/.</p>";
+          return;
+        }
+        container.innerHTML = files.map(f => `
+          <div class="card">
+            <h3>${f.replace('.html','').replace(/_/g,' ')}</h3>
+            <p><a href="samples/${f}" target="_blank">Open plot</a></p>
+          </div>`).join('');
+      } catch (err) {
+        container.innerHTML = "<p>Could not load samples directory.</p>";
+      }
+    }
+    listSamples();
+  </script>
 </body>
 </html>
